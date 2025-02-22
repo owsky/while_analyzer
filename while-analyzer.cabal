@@ -38,6 +38,7 @@ library
     Parser.UtilsParser
     Parser.WhileParser
     State
+    Utils
 
   build-depends:
     , megaparsec          >=9.7.0 && <10.0
