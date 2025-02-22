@@ -1,6 +1,17 @@
-module Ast.BexpAst (Bexp (..), BoolUnaryOp (..), AexpCompOp (..), BoolBinaryOp (..), deMorgan) where
+module Ast.BexpAst (
+  Bexp (..),
+  BoolUnaryOp (..),
+  AexpCompOp (..),
+  BoolBinaryOp (..),
+  flipBoolBinaryOp,
+  flipAexpOp,
+  getConstantsBexp,
+  deMorgan,
+) where
 
-import Ast.AexpAst (Aexp)
+import Ast.AexpAst (Aexp, getConstantsAexp)
+import Data.Set (Set, empty)
+import Data.Set qualified as Set
 
 -- | ADT for Boolean expressions
 data Bexp
@@ -68,6 +79,17 @@ flipAexpOp Ge = Lt
 flipBoolBinaryOp :: BoolBinaryOp -> BoolBinaryOp
 flipBoolBinaryOp And = Or
 flipBoolBinaryOp Or = And
+
+-- | Compute the set of numerical constants syntactically
+-- | appearing in the Boolean expression
+getConstantsBexp :: Bexp -> Set Int
+getConstantsBexp = getConstantsBexp' empty
+ where
+  getConstantsBexp' acc BTrue = acc
+  getConstantsBexp' acc BFalse = acc
+  getConstantsBexp' acc (BexpUnary Not b) = getConstantsBexp' acc b
+  getConstantsBexp' acc (AexpComp _ a1 a2) = Set.unions [getConstantsAexp a1, getConstantsAexp a2, acc]
+  getConstantsBexp' acc (BexpBinary _ b1 b2) = Set.union (getConstantsBexp' acc b1) (getConstantsBexp' acc b2)
 
 -- | Applies DeMorgan's laws to eliminate negations
 deMorgan :: Bexp -> Bexp
