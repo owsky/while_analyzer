@@ -20,5 +20,10 @@ common opts
   default-extensions: OverloadedStrings
 
 library
-  import:         opts
-  hs-source-dirs: src
+  import:          opts
+  hs-source-dirs:  src
+  exposed-modules:
+    Ast.AexpAst
+    Ast.BexpAst
+    Ast.ProgramAst
+    Ast.WhileAst
