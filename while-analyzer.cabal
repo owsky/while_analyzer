@@ -31,8 +31,10 @@ library
     Ast.ProgramAst
     Ast.WhileAst
     Interval.ExtendedInt
+    Parser.AbstractStateParser
     Parser.AexpParser
     Parser.BexpParser
+    Parser.ProgramParser
     Parser.UtilsParser
     Parser.WhileParser
     State
