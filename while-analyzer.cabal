@@ -33,7 +33,10 @@ library
     Ast.BexpAst
     Ast.ProgramAst
     Ast.WhileAst
+    Interval.Arithmetics
+    Interval.Bounds
     Interval.ExtendedInt
+    Interval.Interval
     Parser.AbstractStateParser
     Parser.AexpParser
     Parser.BexpParser
