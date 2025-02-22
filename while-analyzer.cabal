@@ -1,0 +1,24 @@
+cabal-version: 3.4
+name:          while-analyzer
+version:       1.0
+synopsis:      A program analyzer for the toy language While
+license:       GPL-3.0-or-later
+license-file:  LICENSE
+author:        Nicolò Bertocco
+maintainer:    nick.bertocco@gmail.com
+category:      Development
+build-type:    Simple
+
+common opts
+  ghc-options:        -Wall -Werror
+  build-depends:
+    , base        ^>=4.20.0.0 && <5.0
+    , containers  >=0.7       && <0.8
+    , text        >=2.1.2     && <3.0
+
+  default-language:   GHC2021
+  default-extensions: OverloadedStrings
+
+library
+  import:         opts
+  hs-source-dirs: src

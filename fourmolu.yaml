@@ -1,0 +1,6 @@
+column-limit: 120
+haddock-style: single-line
+in-style: no-space
+indentation: 2
+import-grouping: by-scope-then-qualified
+respectful: false
