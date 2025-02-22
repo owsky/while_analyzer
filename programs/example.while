@@ -1,7 +1,7 @@
 var x: top, y: [100, 100];
 
 begin
-  x = 7 / 0;
+  x = 7 / y;
   while (x < y) do
     x = x + 4;
     y = y + 1;

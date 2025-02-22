@@ -1,16 +1,13 @@
 module MarkDown (generateOutput) where
 
 import Abstract.State (NonRelational)
-import Ast.BexpAst (Bexp)
-import Ast.WhileAst (While)
+import AnnotatedWhile (annotateWhile)
+import Ast.WhileAst (While (..))
 import Control.Monad.Writer (MonadWriter (tell), Writer, execWriter)
-import Data.Bifunctor (Bifunctor (bimap))
 import Data.Char (toUpper)
-import Data.Set (Set)
-import Data.Set qualified as Set (toList)
+import Data.Map.Strict (Map)
 import Data.Text (Text)
 import Interval.ExtendedInt (ExtendedInt)
-import Interval.Interval (Interval)
 import System.FilePath (dropExtensions, takeFileName)
 
 type MarkdownWriter = Writer String ()
@@ -28,8 +25,11 @@ boundsBlock (m, n) = do
   tell "\n"
 
 -- | Generate a code block containing the program with syntax highlighting
-codeBlock :: String -> MarkdownWriter
-codeBlock program = tell $ "```pascal\n" ++ program ++ "```\n"
+-- | and the loop invariants
+codeBlock :: While -> Map Int (NonRelational Text a) -> MarkdownWriter
+codeBlock program invariants = do
+  let annotatedProgram = annotateWhile program invariants
+  tell $ "```python\n" ++ show annotatedProgram ++ "```\n"
 
 -- | Generate a block for the input/output abstract state
 stateBlock :: String -> String -> MarkdownWriter
@@ -38,12 +38,6 @@ stateBlock kind state = do
   tell state
   tell "\n"
 
--- | Generate a block for the loop invariants
-loopInvariantsBlock :: [(String, String)] -> MarkdownWriter
-loopInvariantsBlock l = do
-  tell "**Abstract loop invariants**:"
-  tell $ foldr (\(inv, guard) acc -> "\n_Loop guard_: $" <> guard <> "$\n_Loop invariant_: " <> inv <> "\n" <> acc) "" l
-
 -- | Generate the string MarkDown containing the analysis' results, wrapped in the IO monad
 generateOutput ::
   FilePath -> -- input file path, used to create the title
@@ -51,7 +45,7 @@ generateOutput ::
   (ExtendedInt, ExtendedInt) -> -- runtime bounds
   While -> -- program
   NonRelational Text a -> -- output state
-  Set (NonRelational Text Interval, Bexp) -> -- loop invariants
+  Map Int (NonRelational Text a) -> -- loop invariants
   IO String
 generateOutput inputFilePath inputState bounds program outputState loopInvariants = do
   return $ execWriter generateMarkdown
@@ -60,9 +54,8 @@ generateOutput inputFilePath inputState bounds program outputState loopInvariant
     header 1 $ capitalize (dropExtensions $ takeFileName inputFilePath)
     stateBlock "Input" $ show inputState
     boundsBlock bounds
-    codeBlock $ show program
+    codeBlock program loopInvariants
     stateBlock "Output" $ show outputState
-    loopInvariantsBlock $ map (bimap show show) (Set.toList loopInvariants)
 
   capitalize [] = []
   capitalize (x : xs) = toUpper x : xs

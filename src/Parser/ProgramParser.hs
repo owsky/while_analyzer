@@ -2,6 +2,7 @@ module Parser.ProgramParser (parseProgram) where
 
 import Abstract.Value (AbstractValue)
 import Ast.ProgramAst (Program (..))
+import Ast.WhileAst (countLoops)
 import Control.Monad (void)
 import Data.Text (pack)
 import Parser.AbstractStateParser (pAbstractState)
@@ -26,4 +27,5 @@ pProgram pAbstractVal = do
   void $ pWord "begin"
   body <- pWhile <?> "program body"
   void $ pWord "end"
-  return $ Program absState body
+  -- before returning the While program, assign proper IDs to each while loop
+  return $ Program absState $ countLoops body

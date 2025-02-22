@@ -44,10 +44,10 @@ pIfThenElse =
 -- | Parser for While loops
 pWhileDo :: Parser While
 pWhileDo =
-  WhileDo
+  WhileDo (-1) -- assign a placeholder ID to the loop
     <$ pWord "while"
     <*> pBexp
-    <* "do"
+    <* pWord "do"
     <*> pWhile
     <* pWord "done"
       <?> "while do statement"

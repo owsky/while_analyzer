@@ -1,0 +1,16 @@
+begin
+  x = 20;
+  y = -2;
+  z = (x + y * 3) / (-x * -y);
+  while (x - z <= 100000) do
+    z = z - 1;
+    while (y != 100) do
+      y = y + 1;
+    done;
+  done;
+  while (x + y + z != 9999) do
+    x = x + 1;
+    y = y + x;
+    z = z * 3;
+  done;
+end

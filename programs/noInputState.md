@@ -1,7 +1,7 @@
 # NoInputState
 
 **Input state**: x: $⊤_{b}^{\text{\#}}$, y: $⊤_{b}^{\text{\#}}$
-**Input interval boundaries**: m = 1, n = 1
+**Input interval boundaries**: m = -∞, n = +∞
 ```pascal
 begin
   x = 1;
@@ -11,7 +11,7 @@ begin
   done;
 end
 ```
-**Output state**: x: [1, +∞], y: [10, 10]
+**Output state**: x: [1000, 1000], y: [10, 10]
 **Abstract loop invariants**:
 _Loop guard_: $x < 1000$
-_Loop invariant_: x: [1, +∞], y: [10, 10]
+_Loop invariant_: x: [1, 1000], y: [10, 10]

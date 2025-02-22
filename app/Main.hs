@@ -56,11 +56,11 @@ main = do
   -- write output to file, while forcing strict evaluation so an empty file is not created in case of errors
   mdContent `deepseq` writeFile outputFilePath mdContent
  where
-  -- Compute the output file path by replacing the .while extension with a .md
+  -- \| Compute the output file path by replacing the .while extension with a .md
   computeOutputFilePath path
     | takeExtension path == ".while" = return $ replaceExtension path ".md"
     | otherwise = fail $ "Input file has the wrong file extension. Expected: .while, got: " ++ takeExtension path
-
+  -- \| Associate each domain name to its own abstract value parser
   getAbstractDomainParser domainName = case toLower $ pack domainName of
     "interval" -> pInterval
     _ -> error "Unsupported abstract domain"
