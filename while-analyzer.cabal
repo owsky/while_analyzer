@@ -23,6 +23,9 @@ library
   import:          opts
   hs-source-dirs:  src
   exposed-modules:
+    Abstract.Domain
+    Abstract.State
+    Abstract.Value
     Ast.AexpAst
     Ast.BexpAst
     Ast.ProgramAst
