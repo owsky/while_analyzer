@@ -28,6 +28,7 @@ library
     Abstract.Domain
     Abstract.State
     Abstract.Value
+    Abstract.While
     Ast.AexpAst
     Ast.BexpAst
     Ast.ProgramAst
