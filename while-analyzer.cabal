@@ -27,6 +27,7 @@ library
     Ast.BexpAst
     Ast.ProgramAst
     Ast.WhileAst
+    Interval.ExtendedInt
     Parser.AexpParser
     Parser.BexpParser
     Parser.UtilsParser
