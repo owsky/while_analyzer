@@ -2,13 +2,12 @@ module Parser.ProgramParser (parseProgram) where
 
 import Abstract.Value (AbstractValue)
 import Ast.ProgramAst (Program (..))
-import Ast.WhileAst (countLoops)
 import Control.Monad (void)
 import Data.Text (pack)
 import Parser.AbstractStateParser (pAbstractState)
 import Parser.UtilsParser (Parser, pWord)
 import Parser.WhileParser (pWhile)
-import Text.Megaparsec (eof, errorBundlePretty, optional, parse, (<?>))
+import Text.Megaparsec (eof, errorBundlePretty, label, optional, parse, (<?>))
 
 -- | Attempts to parse the text file pointed by the given file path into a program
 parseProgram ::
@@ -22,10 +21,10 @@ parseProgram inputFilePath pAbstractVal = do
 
 -- | Parser for While programs parameterized on the Intervals abstract domain
 pProgram :: (Ord a, Show a, AbstractValue a) => Parser a -> Parser (Program a)
-pProgram pAbstractVal = do
+pProgram pAbstractVal = label "while program" $ do
   absState <- optional (pAbstractState pAbstractVal) <?> "abstract state definition"
   void $ pWord "begin"
   body <- pWhile <?> "program body"
   void $ pWord "end"
   -- before returning the While program, assign proper IDs to each while loop
-  return $ Program absState $ countLoops body
+  return $ Program absState body

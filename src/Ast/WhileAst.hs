@@ -1,10 +1,10 @@
-module Ast.WhileAst (While (..), getConstants, freeVars, countLoops) where
+module Ast.WhileAst (While (..), getConstants, freeVars) where
 
 import Ast.AexpAst (Aexp, getConstantsAexp)
 import Ast.BexpAst (Bexp, getConstantsBexp)
 import Data.Set (Set, empty)
 import Data.Set qualified as Set
-import Data.Text (Text)
+import Data.Text (Text, unpack)
 import Interval.ExtendedInt (ExtendedInt (..))
 
 -- | ADT for the While programming language
@@ -14,6 +14,36 @@ data While
   | Composition While While
   | IfThenElse Bexp While While
   | WhileDo Int Bexp While -- the integer is only used to identify the loop in the program
+
+instance Show While where
+  show :: While -> String
+  show w = "begin\n" <> showIndented 2 w <> "end\n"
+   where
+    showIndented :: Int -> While -> String
+    showIndented indent (Assignment varname e) = replicate indent ' ' <> unpack varname <> " = " <> show e <> ";\n"
+    showIndented indent Skip = replicate indent ' ' <> "skip;\n"
+    showIndented indent (Composition c1 c2) = showIndented indent c1 <> showIndented indent c2
+    showIndented indent (IfThenElse guard thenBranch elseBranch) =
+      replicate indent ' '
+        <> "if ("
+        <> show guard
+        <> ") then\n"
+        <> showIndented (indent + 2) thenBranch
+        <> replicate indent ' '
+        <> "else\n"
+        <> showIndented (indent + 2) elseBranch
+        <> replicate indent ' '
+        <> "endif;\n"
+    showIndented indent (WhileDo loopId guard body) =
+      replicate indent ' '
+        <> "while ("
+        <> show guard
+        <> ") do // ("
+        <> show loopId
+        <> ")\n"
+        <> showIndented (indent + 2) body
+        <> replicate indent ' '
+        <> "done;\n"
 
 -- | Extracts the set of numerical constants syntactically appearing in the given
 -- | While program, with the inclusion of positive infinite and negative infinite
@@ -46,20 +76,3 @@ freeVars w = freeVars' w empty
   freeVars' (Composition s1 s2) acc = freeVars' s1 acc `Set.union` freeVars' s2 acc
   freeVars' (IfThenElse _ s1 s2) acc = freeVars' s1 acc `Set.union` freeVars' s2 acc
   freeVars' (WhileDo _ _ s) acc = freeVars' s acc
-
--- | Assigns incremental integer IDs to each loop occurring in the program
-countLoops :: While -> While
-countLoops w = fst $ countLoops' (w, 0)
- where
-  countLoops' (WhileDo _ b s, c) =
-    let (s', c') = countLoops' (s, c + 1)
-    in (WhileDo c b s', c')
-  countLoops' (IfThenElse b s1 s2, c) =
-    let (s1', c') = countLoops' (s1, c)
-        (s2', c'') = countLoops' (s2, c')
-    in (IfThenElse b s1' s2', c'')
-  countLoops' (Composition s1 s2, c) =
-    let (s1', c') = countLoops' (s1, c)
-        (s2', c'') = countLoops' (s2, c')
-    in (Composition s1' s2', c'')
-  countLoops' p = p

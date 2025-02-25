@@ -1,10 +1,10 @@
 module MarkDown (generateOutput) where
 
 import Abstract.State (NonRelational)
-import AnnotatedWhile (annotateWhile)
 import Ast.WhileAst (While (..))
 import Control.Monad.Writer (MonadWriter (tell), Writer, execWriter)
 import Data.Char (toUpper)
+import Data.Map qualified as Map
 import Data.Map.Strict (Map)
 import Data.Text (Text)
 import Interval.ExtendedInt (ExtendedInt)
@@ -26,16 +26,21 @@ boundsBlock (m, n) = do
 
 -- | Generate a code block containing the program with syntax highlighting
 -- | and the loop invariants
-codeBlock :: While -> Map Int (NonRelational Text a) -> MarkdownWriter
-codeBlock program invariants = do
-  let annotatedProgram = annotateWhile program invariants
-  tell $ "```python\n" ++ show annotatedProgram ++ "```\n"
+codeBlock :: While -> MarkdownWriter
+codeBlock program = do
+  tell $ "```pascal\n" ++ show program ++ "```\n"
 
 -- | Generate a block for the input/output abstract state
 stateBlock :: String -> String -> MarkdownWriter
 stateBlock kind state = do
   tell $ "**" <> kind <> " state**: "
   tell state
+  tell "\n"
+
+invariantsBlock :: Map Int (NonRelational Text a) -> MarkdownWriter
+invariantsBlock invariants = do
+  tell "**Abstract loop invariants**:\n"
+  tell $ foldr (\(loopId, inv) acc -> "- (" <> show loopId <> "): " <> show inv <> "\n" <> acc) "" $ Map.assocs invariants
   tell "\n"
 
 -- | Generate the string MarkDown containing the analysis' results, wrapped in the IO monad
@@ -54,7 +59,8 @@ generateOutput inputFilePath inputState bounds program outputState loopInvariant
     header 1 $ capitalize (dropExtensions $ takeFileName inputFilePath)
     stateBlock "Input" $ show inputState
     boundsBlock bounds
-    codeBlock program loopInvariants
+    codeBlock program
+    invariantsBlock loopInvariants
     stateBlock "Output" $ show outputState
 
   capitalize [] = []

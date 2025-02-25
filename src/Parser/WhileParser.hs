@@ -2,52 +2,60 @@ module Parser.WhileParser (pWhile) where
 
 import Ast.WhileAst (While (..))
 import Control.Monad (void)
+import Data.Bifunctor qualified
 import Parser.AexpParser (pAexp)
 import Parser.BexpParser (pBexp)
 import Parser.UtilsParser (Parser, failMissingSemi, pVarName, pWord, sc', semi, symbol)
-import Text.Megaparsec (MonadParsec (getParserState, label), choice, optional, (<?>))
+import Text.Megaparsec (MonadParsec (getParserState, label), choice, optional)
 
 -- | Parser for statements of the While programming language
 pWhile :: Parser While
-pWhile = label "while statement" $ do
+pWhile = fst <$> pWhile' 0
+
+pWhile' :: Int -> Parser (While, Int)
+pWhile' c = label "while statement" $ do
   void sc'
   s <- getParserState -- due to lazy evaluation the parser state is only acquired when failing
-  c1 <- choice [pIfThenElse, pSkip, pWhileDo, pAssignment]
+  (statement, c') <- choice [pIfThenElse c, pSkip c, pWhileDo c, pAssignment c]
   semicolon <- optional semi
   case semicolon of
     Just _ -> do
-      c2m <- optional pWhile
-      return $ maybe c1 (Composition c1) c2m
+      c2m <- optional $ pWhile' c'
+      return $ maybe (statement, c') (Data.Bifunctor.first (Composition statement)) c2m
     Nothing -> failMissingSemi s
 
 -- | Parser for assignment statements
-pAssignment :: Parser While
-pAssignment = Assignment <$> pVarName <* symbol "=" <*> pAexp <?> "assignment statement"
+pAssignment :: Int -> Parser (While, Int)
+pAssignment c = label "assignment statement" $ do
+  varName <- pVarName
+  _ <- symbol "="
+  value <- pAexp
+  return (Assignment varName value, c)
 
 -- | Parser for skip statements
-pSkip :: Parser While
-pSkip = Skip <$ pWord "skip" <?> "skip statement"
+pSkip :: Int -> Parser (While, Int)
+pSkip c = label "skip statement" $ do
+  _ <- pWord "skip"
+  return (Skip, c)
 
 -- | Parser for if then else statements
-pIfThenElse :: Parser While
-pIfThenElse =
-  IfThenElse
-    <$ pWord "if"
-    <*> pBexp
-    <* pWord "then"
-    <*> pWhile
-    <* pWord "else"
-    <*> pWhile
-    <* pWord "endif"
-      <?> "if then else statement"
+pIfThenElse :: Int -> Parser (While, Int)
+pIfThenElse c = label "if then else statement" $ do
+  _ <- pWord "if"
+  guard <- pBexp
+  _ <- pWord "then"
+  (thenBranch, c') <- pWhile' c
+  _ <- pWord "else"
+  (elseBranch, c'') <- pWhile' c'
+  _ <- pWord "endif"
+  return (IfThenElse guard thenBranch elseBranch, c'')
 
 -- | Parser for While loops
-pWhileDo :: Parser While
-pWhileDo =
-  WhileDo (-1) -- assign a placeholder ID to the loop
-    <$ pWord "while"
-    <*> pBexp
-    <* pWord "do"
-    <*> pWhile
-    <* pWord "done"
-      <?> "while do statement"
+pWhileDo :: Int -> Parser (While, Int)
+pWhileDo c = label "while do statement" $ do
+  _ <- pWord "while"
+  guard <- pBexp
+  _ <- pWord "do"
+  (body, c') <- pWhile' $ c + 1
+  _ <- pWord "done"
+  return (WhileDo c guard body, c')
