@@ -7,4 +7,6 @@ begin
   y = 7 / x;
 end
 ```
+**Abstract loop invariants**:
+
 **Output state**: $⊥^{\text{\#}}$

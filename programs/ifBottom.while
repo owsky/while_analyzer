@@ -1,0 +1,7 @@
+begin
+  if false then
+    x = 1 / 0;
+  else
+    skip;
+  endif;
+end

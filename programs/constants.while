@@ -1,0 +1,9 @@
+begin
+  x = 0;
+  y = 5;
+  while (y < 20) do
+    x = x + 3;
+    y = y + x;
+    x = x - 3;
+  done;
+end
