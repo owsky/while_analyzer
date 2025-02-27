@@ -7,6 +7,7 @@ import Abstract.Value (AbstractValue)
 import Ast.BexpAst (Bexp (..), BoolUnaryOp (..))
 import Ast.WhileAst (While (..))
 import Data.Map.Strict qualified as Map
+import Data.Maybe (isNothing)
 import Data.Set (Set)
 import Data.Text (Text)
 import Interval.ExtendedInt (ExtendedInt)
@@ -52,9 +53,9 @@ absWhileSemantics = absWhileSemantics' Map.empty -- tail recursive subfunction
       -- first define the loop's functional as the least upper bound of the input state and the concatenation
       -- of the body's semantics with the guard's semantics, evaluated over the current state x bound by the
       -- functional
-      f (x, invAcc) =
-        let (newState, newInv) = (absWhileSemantics' inv thresholds widenDelay descendSteps e . absBexpSemantics b) x
-        in (s `lub` newState, newInv `Map.union` invAcc)
+      f (x, _) =
+        let (newState, inv') = (absWhileSemantics' inv thresholds widenDelay descendSteps e . absBexpSemantics b) x
+        in (s `lub` newState, inv')
 
       -- then find a postfix point of the functional through Kleeni iterates, with optional widening
       -- if widening is not applied, an abstract fixpoint is found instead of a postfixpoint
@@ -72,15 +73,17 @@ absWhileSemantics = absWhileSemantics' Map.empty -- tail recursive subfunction
     iterateW g (x, invAcc) (Just 0) =
       let (x', invAcc') = g (x, invAcc)
           wideX = widening thresholds x x'
-      in if wideX == x then (x, invAcc') else iterateW g (wideX, invAcc') (Just 0)
+      in if wideX == x then (x, invAcc) else iterateW g (wideX, invAcc') (Just 0)
     iterateW g (x, invAcc) k =
       let (x', invAcc') = g (x, invAcc)
       in if x' == x then (x, invAcc) else iterateW g (x', invAcc') (decrMaybe k)
 
     -- Kleeni iterations with narrowing
-    iterateN _ x Nothing = x
+    -- if descending steps is given, the glb is used for narrowing a fixed number of times
+    -- otherwise the narrowing operator is used until convergence
     iterateN _ x (Just 0) = x
-    iterateN g (x, invAcc) n =
-      let (x', invAcc') = g (x, invAcc)
-          narrowX = x `narrowing` x'
-      in if narrowX == x then (x, invAcc') else iterateN g (narrowX, invAcc') (decrMaybe n)
+    iterateN g (x, invAcc) descendSteps' =
+      let narrowOp = if isNothing descendSteps' then narrowing else glb
+          (x', invAcc') = g (x, invAcc)
+          narrowX = x `narrowOp` x'
+      in if x' == x then (x, invAcc) else iterateN g (narrowX, invAcc') (decrMaybe descendSteps')
