@@ -1,4 +1,4 @@
-module Interval.ExtendedInt where
+module ExtendedInt where
 
 import Text.Read (readMaybe)
 

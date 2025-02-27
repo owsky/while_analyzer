@@ -5,7 +5,7 @@ import Ast.BexpAst (Bexp, getConstantsBexp)
 import Data.Set (Set, empty)
 import Data.Set qualified as Set
 import Data.Text (Text, unpack)
-import Interval.ExtendedInt (ExtendedInt (..))
+import ExtendedInt (ExtendedInt (..))
 
 -- | ADT for the While programming language
 data While
@@ -38,7 +38,7 @@ instance Show While where
       replicate indent ' '
         <> "while ("
         <> show guard
-        <> ") do // ("
+        <> ") do -- ("
         <> show loopId
         <> ")\n"
         <> showIndented (indent + 2) body
@@ -67,8 +67,8 @@ getConstants w =
     in Set.union guardConstants bodyConstants
 
 -- | Extracts the set of variable names occurring in the given While program
-freeVars :: While -> Set Text
-freeVars w = freeVars' w empty
+freeVars :: While -> [Text]
+freeVars w = Set.toList $ freeVars' w empty
  where
   freeVars' :: While -> Set Text -> Set Text
   freeVars' (Assignment x _) acc = Set.insert x acc

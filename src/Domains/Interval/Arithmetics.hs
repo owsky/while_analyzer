@@ -1,9 +1,9 @@
-module Interval.Arithmetics (sumIntervals, subIntervals, mulIntervals, divIntervals, negateInterval) where
+module Domains.Interval.Arithmetics (sumIntervals, subIntervals, mulIntervals, divIntervals, negateInterval) where
 
 import Abstract.Domain (lub)
-import Interval.Bounds (clampInterval)
-import Interval.ExtendedInt (ExtendedInt (..))
-import {-# SOURCE #-} Interval.Interval (Interval (..), mkInterval)
+import Domains.Interval.Bounds (clampInterval)
+import {-# SOURCE #-} Domains.Interval.Interval (Interval (..), mkInterval)
+import ExtendedInt (ExtendedInt (..))
 
 -- | Addition of two intervals with strict Bottom
 sumIntervals :: Interval -> Interval -> Interval

@@ -1,10 +1,13 @@
 # IfBottom
 
-**Input state**: x: $⊤_{b}^{\text{\#}}$
-**Input interval boundaries**: m = -∞, n = +∞
+**Input state**:
+- x: $⊤_{b}^{\text{\#}}$
+
+**Input interval boundaries**:
+- m = -∞, n = +∞
 ```pascal
 begin
-  if (false) then
+  if (true) then
     x = 1 / 0;
   else
     skip;
@@ -13,4 +16,9 @@ end
 ```
 **Abstract loop invariants**:
 
-**Output state**: x: $⊤_{b}^{\text{\#}}$
+**Output state**:
+- $⊥^{\text{\#}}$
+
+
+**Runtime error alarms**:
+- x: possible division by zero

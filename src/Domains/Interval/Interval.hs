@@ -1,6 +1,6 @@
 {-# LANGUAGE LambdaCase #-}
 
-module Interval.Interval (Interval (..), mkInterval, IntervalState) where
+module Domains.Interval.Interval (Interval (..), mkInterval, IntervalState) where
 
 import Abstract.Aexp (absAexpSemantics)
 import Abstract.Domain (AbstractDomain (..))
@@ -10,9 +10,9 @@ import Ast.AexpAst (Aexp, AexpBinaryOp (..), AexpUnaryOp (..))
 import Data.Set (Set)
 import Data.Set qualified as Set
 import Data.Text (Text)
-import Interval.Arithmetics (divIntervals, mulIntervals, negateInterval, subIntervals, sumIntervals)
-import Interval.Bounds (clampInterval)
-import Interval.ExtendedInt (ExtendedInt (..))
+import Domains.Interval.Arithmetics (divIntervals, mulIntervals, negateInterval, subIntervals, sumIntervals)
+import Domains.Interval.Bounds (clampInterval)
+import ExtendedInt (ExtendedInt (..))
 import State (State (..))
 
 -- | ADT for the Interval abstract domain value
@@ -48,24 +48,35 @@ instance Show Interval where
 instance Num Interval where
   (+) :: Interval -> Interval -> Interval
   (+) = sumIntervals
+
   (-) :: Interval -> Interval -> Interval
   (-) = subIntervals
+
   (*) :: Interval -> Interval -> Interval
   (*) = mulIntervals
+
   negate :: Interval -> Interval
   negate = negateInterval
+
   abs :: Interval -> Interval
-  abs = undefined
+  abs Empty = Empty
+  abs (Interval a b) = mkInterval (abs a) (abs b)
+
+  -- Sign of an interval is meaningless
   signum :: Interval -> Interval
   signum = undefined
+
   fromInteger :: Integer -> Interval
   fromInteger k = Interval (fromIntegral k) (fromIntegral k)
 
 instance Fractional Interval where
   (/) :: Interval -> Interval -> Interval
   (/) = divIntervals
+
+  -- not required by the analyzer
   recip :: Interval -> Interval
   recip = undefined
+
   fromRational :: Rational -> Interval
   fromRational = error "While analyzer only supports the integer data type"
 
@@ -205,6 +216,11 @@ instance AbstractValue Interval where
   -- \| Non negative interval value
   nonNegative :: Interval
   nonNegative = mkInterval 0 PosInf
+
+  -- \| Checks if the given interval includes zero
+  includesZero :: Interval -> Bool
+  includesZero Empty = False
+  includesZero (Interval a b) = a <= 0 && 0 <= b
 
 -- | Type of abstract states domain for the Interval abstract value.
 -- | Derived by pointwise lifing with smashed Bottom

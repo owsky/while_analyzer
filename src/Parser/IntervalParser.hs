@@ -1,8 +1,8 @@
 module Parser.IntervalParser where
 
 import Control.Monad (void)
-import Interval.ExtendedInt (ExtendedInt (..))
-import Interval.Interval (Interval, mkInterval)
+import Domains.Interval.Interval (Interval, mkInterval)
+import ExtendedInt (ExtendedInt (..))
 import Parser.UtilsParser (Parser, comma, pWord, signedInt, symbol)
 import Text.Megaparsec (choice, label, (<?>))
 

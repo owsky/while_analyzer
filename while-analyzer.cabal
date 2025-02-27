@@ -16,7 +16,7 @@ common opts
     , containers  >=0.7       && <0.8
     , text        >=2.1.2     && <3.0
 
-  default-language:   GHC2021
+  default-language:   GHC2024
   default-extensions: OverloadedStrings
 
 library
@@ -33,10 +33,12 @@ library
     Ast.BexpAst
     Ast.ProgramAst
     Ast.WhileAst
-    Interval.Arithmetics
-    Interval.Bounds
-    Interval.ExtendedInt
-    Interval.Interval
+    Domains.Error.Error
+    Domains.Error.Product
+    Domains.Interval.Arithmetics
+    Domains.Interval.Bounds
+    Domains.Interval.Interval
+    ExtendedInt
     Parser.AbstractStateParser
     Parser.AexpParser
     Parser.BexpParser

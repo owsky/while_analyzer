@@ -1,9 +1,9 @@
-module Interval.Bounds (clampInterval, setBounds) where
+module Domains.Interval.Bounds (clampInterval, setBounds) where
 
 import Abstract.Domain (AbstractDomain (..))
 import Data.IORef (IORef, newIORef, readIORef, writeIORef)
-import Interval.ExtendedInt (ExtendedInt (..))
-import {-# SOURCE #-} Interval.Interval (Interval (..))
+import {-# SOURCE #-} Domains.Interval.Interval (Interval (..))
+import ExtendedInt (ExtendedInt (..))
 import System.IO.Unsafe (unsafePerformIO)
 import Prelude hiding (lookup)
 

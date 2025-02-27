@@ -1,11 +1,14 @@
 # Example
 
-**Input state**: x: $⊤_{b}^{\text{\#}}$, y: [100, 100], z: $⊤_{b}^{\text{\#}}$
-**Input interval boundaries**: m = -∞, n = +∞
+**Input state**:
+- x: $⊤_{b}^{\text{\#}}$, y: [-1, 1], z: $⊤_{b}^{\text{\#}}$
+
+**Input interval boundaries**:
+- m = -∞, n = +∞
 ```pascal
 begin
   x = 7 / y;
-  while (x < y) do // (0)
+  while (x < y) do -- (0)
     x = x + 4;
     y = y + 1;
   done;
@@ -17,6 +20,12 @@ begin
 end
 ```
 **Abstract loop invariants**:
-- (0): x: [0, +∞], y: [100, +∞], z: $⊤_{b}^{\text{\#}}$
+- (0): x: [-7, +∞], y: [-1, +∞], z: $⊤_{b}^{\text{\#}}$
 
-**Output state**: x: [100, +∞], y: [100, +∞], z: [1, 3]
+**Output state**:
+- x: [-1, +∞], y: [-1, +∞], z: [1, 3]
+
+
+**Runtime error alarms**:
+- x: possible division by zero
+- y: possible division by zero

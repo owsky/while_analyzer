@@ -1,7 +1,7 @@
 module Abstract.Domain (AbstractDomain (..)) where
 
 import Data.Set (Set)
-import Interval.ExtendedInt (ExtendedInt)
+import ExtendedInt (ExtendedInt)
 
 -- | Type class for abstract domains, parameterized on
 -- | complete lattices

@@ -1,6 +1,6 @@
 module Args (Args (..), getArgs) where
 
-import Interval.ExtendedInt (ExtendedInt (..))
+import ExtendedInt (ExtendedInt (..))
 import Options.Applicative (
   Parser,
   ParserInfo,

@@ -17,7 +17,7 @@ pAbstractState pAbstractVal = label "abstract state" $ do
   absVars <- pAbstractVariable pAbstractVal `sepEndBy` comma
   semicolon <- optional semi
   case semicolon of
-    Just _ -> return $ NonRelational (fromList absVars)
+    Just _ -> return $ NonRelational True (fromList absVars)
     Nothing -> failMissingSemi s
 
 -- | Abstract variable parser

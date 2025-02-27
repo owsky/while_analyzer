@@ -1,5 +1,11 @@
-var x: [0, 0];
+var x: [-1, 1];
 
 begin
   y = 7 / x;
+  y = y + 1;
+  z = x + y;
+  while (y > -1) do
+    y = y - 1;
+    w = w / y;
+  done;
 end

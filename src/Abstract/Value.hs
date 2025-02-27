@@ -40,3 +40,6 @@ class (AbstractDomain a) => AbstractValue a where
 
   -- | Abstract value for non negative values (>= 0)
   nonNegative :: a
+
+  -- | Checks whether the abstract value includes zero
+  includesZero :: a -> Bool

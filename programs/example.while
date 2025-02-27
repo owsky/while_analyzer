@@ -1,4 +1,4 @@
-var x: top, y: [100, 100];
+var x: top, y: [-1, 1];
 
 begin
   x = 7 / y;

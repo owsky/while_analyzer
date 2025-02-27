@@ -1,4 +1,4 @@
-module Abstract.While (absWhileSemantics) where
+module Abstract.While (absWhileSemantics, Invariants) where
 
 import Abstract.Bexp (absBexpSemantics)
 import Abstract.Domain (AbstractDomain (..))
@@ -6,14 +6,15 @@ import Abstract.State (AbstractState (..), NonRelational (..))
 import Abstract.Value (AbstractValue)
 import Ast.BexpAst (Bexp (..), BoolUnaryOp (..))
 import Ast.WhileAst (While (..))
+import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
 import Data.Maybe (isNothing)
 import Data.Set (Set)
 import Data.Text (Text)
-import Interval.ExtendedInt (ExtendedInt)
+import ExtendedInt (ExtendedInt)
 import Utils (decrMaybe)
 
-type Invariants a = Map.Map Int (NonRelational Text a)
+type Invariants a = Map Int (NonRelational Text a)
 
 -- | Abstract evaluation of While programs, defined by induction on their
 -- | denotational semantics
