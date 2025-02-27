@@ -139,9 +139,10 @@ instance AbstractValue Interval where
   gamma (Interval a b) =
     case (a, b) of
       (ExtInt a', PosInf) -> [a' ..]
-      -- infinite list comprehensions need a starting point, so the list is generated
-      -- from b' and then each value gets negated
-      (NegInf, ExtInt b') -> map negate [b' ..]
+      -- infinite list comprehensions need a starting point, so first the list from
+      -- b' to 0 is generated in descending order, then an infinite list starting
+      -- from 1 is generated and negated
+      (NegInf, ExtInt b') -> reverse [0 .. b'] <> map negate [1 ..]
       -- this is a tricky case, as there is no starting point, so the minimum
       -- integer which the machine can represent is used instead
       (NegInf, PosInf) -> [minBound :: Int ..]
