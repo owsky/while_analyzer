@@ -85,17 +85,18 @@ instance AbstractValue Error where
   absBinary :: AexpBinaryOp -> Error -> Error -> Error
   absBinary _ (Error s1) (Error s2) = Error $ s1 `Set.union` s2
 
-  -- \| Backwards unary operator for errors, the errors are propagated
-  -- \| from the result to the operand
+  -- \| Backwards binary operator for errors, the errors from the result
+  -- \| are ignored, as errors shouldn't be backpropagated during constraint refinements
   backAbsUnary :: AexpUnaryOp -> (Error, Error) -> Error
-  backAbsUnary _ (Error s1, Error s2) = Error $ s1 `Set.union` s2
+  backAbsUnary _ (Error s1, Error _) = Error s1
 
   -- \| Backwards binary operator for errors, the errors from the result
-  -- \| are propagated backwards to the operands
+  -- \| are ignored, as errors shouldn't be backpropagated during constraint refinements
   backAbsBinary :: AexpBinaryOp -> (Error, Error, Error) -> (Error, Error)
-  backAbsBinary _ (Error s1, Error s2, Error s3) = (Error $ s3 `Set.union` s1, Error $ s3 `Set.union` s2)
+  backAbsBinary _ (Error s1, Error s2, Error _) = (Error s1, Error s2)
 
-  -- errors carry no numerical meaning, thus these terms are just top
+  -- errors carry no numerical meaning, thus these terms are just top so performing
+  -- a glb with them during backpropagation doesn't change the error values
 
   negative :: Error
   negative = top

@@ -24,5 +24,6 @@ end
 
 
 **Runtime error alarms**:
+- w: possible division by zero
 - y: possible division by zero
 - z: possible division by zero

@@ -28,4 +28,3 @@ end
 
 **Runtime error alarms**:
 - x: possible division by zero
-- y: possible division by zero
