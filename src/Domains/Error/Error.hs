@@ -1,4 +1,4 @@
-module Domains.Error.Error (Error (..), ErrorType (..), singleton, addError, showErrors) where
+module Domains.Error.Error (Error (..), ErrorType (..), showErrors) where
 
 import Abstract.Domain (AbstractDomain (..))
 import Abstract.Value (AbstractValue (..))
@@ -20,18 +20,7 @@ allErrors :: Set ErrorType
 allErrors = Set.fromList [minBound .. maxBound]
 
 -- | ADT for the Error Domain
-data Error
-  = NoError
-  | Alarm (Set ErrorType)
-  deriving (Show, Ord, Eq)
-
--- | Creates an alarm from a single error
-singleton :: ErrorType -> Error
-singleton e = Alarm $ Set.singleton e
-
-addError :: ErrorType -> Error -> Error
-addError e NoError = singleton e
-addError e (Alarm s) = Alarm $ Set.insert e s
+newtype Error = Error (Set ErrorType) deriving (Show, Ord, Eq)
 
 -- | Pretty prints the set of errors
 showErrors :: Set ErrorType -> String
@@ -42,62 +31,51 @@ showErrors e = intercalate ", " (map show $ Set.toList e)
 instance AbstractDomain Error where
   -- \| Partial order relation for errors
   leq :: Error -> Error -> Bool
-  leq (Alarm _) _ = True
-  leq _ NoError = True
-  leq _ _ = False
+  leq (Error s1) (Error s2) = s1 `Set.isSubsetOf` s2
 
-  -- \| Bottom element of the lattice, alarm with all supported errors
+  -- \| Bottom element of the lattice, no errors detected
   bottom :: Error
-  bottom = Alarm allErrors
+  bottom = Error Set.empty
 
-  -- \| Top element of the lattice, no error detected
+  -- \| Top element of the lattice, all errors detected
   top :: Error
-  top = NoError
+  top = Error allErrors
 
   -- \| Least upper bound operator, given two alarms the error sets are merged
   lub :: Error -> Error -> Error
-  lub NoError _ = NoError
-  lub _ NoError = NoError
-  lub (Alarm e1) (Alarm e2) = Alarm $ e1 `Set.union` e2
+  lub (Error s1) (Error s2) = Error $ s1 `Set.union` s2
 
   -- \| Greatest lower bound operator, given two alarms the error sets are merged
   -- \| if only one element has error alarms, its set is propagated
   glb :: Error -> Error -> Error
-  glb (Alarm e1) (Alarm e2) = Alarm $ e1 `Set.union` e2
-  glb (Alarm e1) _ = Alarm e1
-  glb _ (Alarm e2) = Alarm e2
-  glb _ _ = NoError
+  glb (Error s1) (Error s2) = Error $ s1 `Set.intersection` s2
 
   -- \| Widening operator for errors, the error sets are
   -- \| propagated
   widening :: Set ExtendedInt -> Error -> Error -> Error
-  widening _ (Alarm e1) (Alarm e2) = Alarm $ e1 `Set.union` e2
-  widening _ (Alarm e1) _ = Alarm e1
-  widening _ _ (Alarm e2) = Alarm e2
-  widening _ _ _ = NoError
+  widening _ (Error s1) (Error s2) = Error $ s1 `Set.union` s2
 
   -- \| Narrowing operator for errors, the error sets are propagated
   narrowing :: Error -> Error -> Error
-  narrowing (Alarm e1) (Alarm e2) = Alarm $ e1 `Set.union` e2
-  narrowing (Alarm e1) _ = Alarm e1
-  narrowing _ (Alarm e2) = Alarm e2
-  narrowing _ _ = NoError
+  narrowing (Error s1) (Error s2) = Error $ s1 `Set.union` s2
 
 -- | Making Error an instance of AbstractValue, so it can be used in a
 -- | product domain
 instance AbstractValue Error where
-  -- \| Abstraction function for errors
+  -- \| Abstraction function for errors, a set of constants cannot give
+  -- \| rise to runtime errors
   alpha :: Maybe ([Int] -> Error)
-  alpha = undefined
+  alpha = Just $ const bottom
 
-  -- \| Concretization function for errors
+  -- \| Concretization function for errors, this doesn't carry any
+  -- \| particular meaning
   gamma :: Error -> [Int]
-  gamma = undefined
+  gamma = const []
 
   -- \| Constant abstraction for errors, constants
   -- \| do not give rise to errors
   absConst :: Int -> Error
-  absConst _ = NoError
+  absConst _ = bottom
 
   -- \| Unary operator for errors, the errors are propagated
   absUnary :: AexpUnaryOp -> Error -> Error
@@ -105,42 +83,31 @@ instance AbstractValue Error where
 
   -- \| Binary operator for errors, the errors are propagated
   absBinary :: AexpBinaryOp -> Error -> Error -> Error
-  absBinary _ (Alarm e1) (Alarm e2) = Alarm $ e1 `Set.union` e2
-  absBinary _ (Alarm e1) _ = Alarm e1
-  absBinary _ _ (Alarm e2) = Alarm e2
-  absBinary _ _ _ = NoError
+  absBinary _ (Error s1) (Error s2) = Error $ s1 `Set.union` s2
 
   -- \| Backwards unary operator for errors, the errors are propagated
   -- \| from the result to the operand
   backAbsUnary :: AexpUnaryOp -> (Error, Error) -> Error
-  backAbsUnary _ (Alarm e1, Alarm e2) = Alarm $ e1 `Set.union` e2
-  backAbsUnary _ (_, Alarm e2) = Alarm e2
-  backAbsUnary _ (Alarm e1, _) = Alarm e1
-  backAbsUnary _ _ = NoError
+  backAbsUnary _ (Error s1, Error s2) = Error $ s1 `Set.union` s2
 
   -- \| Backwards binary operator for errors, the errors from the result
   -- \| are propagated backwards to the operands
   backAbsBinary :: AexpBinaryOp -> (Error, Error, Error) -> (Error, Error)
-  backAbsBinary _ (Alarm e1, Alarm e2, Alarm e3) = (Alarm $ e3 `Set.union` e1, Alarm $ e3 `Set.union` e2)
-  backAbsBinary _ (NoError, Alarm e2, Alarm e3) = (Alarm e3, Alarm $ e3 `Set.union` e2)
-  backAbsBinary _ (Alarm e1, NoError, Alarm e3) = (Alarm $ e3 `Set.union` e1, Alarm e3)
-  backAbsBinary _ (Alarm e1, Alarm e2, NoError) = (Alarm e1, Alarm e2)
-  backAbsBinary _ (NoError, Alarm e2, NoError) = (NoError, Alarm e2)
-  backAbsBinary _ (Alarm e1, NoError, NoError) = (Alarm e1, NoError)
-  backAbsBinary _ (NoError, NoError, Alarm e3) = (Alarm e3, Alarm e3)
-  backAbsBinary _ (NoError, NoError, NoError) = (NoError, NoError)
+  backAbsBinary _ (Error s1, Error s2, Error s3) = (Error $ s3 `Set.union` s1, Error $ s3 `Set.union` s2)
+
+  -- errors carry no numerical meaning, thus these terms are just top
 
   negative :: Error
-  negative = NoError
+  negative = top
 
   nonPositive :: Error
-  nonPositive = NoError
+  nonPositive = top
 
   positive :: Error
-  positive = NoError
+  positive = top
 
   nonNegative :: Error
-  nonNegative = NoError
+  nonNegative = top
 
   includesZero :: Error -> Bool
   includesZero = const False

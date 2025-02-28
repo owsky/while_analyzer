@@ -7,6 +7,7 @@ import Control.Monad.Writer (MonadWriter (tell), Writer, execWriter)
 import Data.Char (toUpper)
 import Data.Map qualified as Map
 import Data.Map.Strict (Map)
+import Data.Set qualified as Set
 import Data.Text (Text, unpack)
 import Domains.Error.Error (Error (..), showErrors)
 import ExtendedInt (ExtendedInt)
@@ -54,9 +55,9 @@ errorsBlock (NonRelational _ errors) = do
   -- \| Pretty printing the (key,value) list
   showErrorList :: [(Text, Error)] -> String
   showErrorList [] = ""
-  showErrorList ((varName, err) : xs) = case err of
-    NoError -> showErrorList xs
-    Alarm s -> "- " <> unpack varName <> ": " <> showErrors s <> "\n" <> showErrorList xs
+  showErrorList ((varName, Error s) : xs) = case Set.size s == 0 of
+    True -> showErrorList xs
+    False -> "- " <> unpack varName <> ": " <> showErrors s <> "\n" <> showErrorList xs
 
 -- | Generate the string MarkDown containing the analysis' results, wrapped in the IO monad
 generateOutput ::

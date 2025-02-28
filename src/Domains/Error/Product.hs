@@ -7,8 +7,9 @@ import Abstract.Value (AbstractValue (..))
 import Ast.AexpAst (Aexp, AexpBinaryOp (Div), AexpUnaryOp)
 import Data.Map.Strict qualified as Map
 import Data.Set (Set)
+import Data.Set qualified as Set
 import Data.Text (Text)
-import Domains.Error.Error (Error (..), ErrorType (DivisionByZero), addError, showErrors)
+import Domains.Error.Error (Error (..), ErrorType (DivisionByZero), showErrors)
 import ExtendedInt (ExtendedInt)
 import State (update)
 
@@ -18,8 +19,7 @@ data ProductError a = (AbstractDomain a) => ProductError a Error
 
 instance (Show a) => Show (ProductError a) where
   show :: ProductError a -> String
-  show (ProductError a (Alarm e)) = "(" <> show a <> "," <> showErrors e <> " )"
-  show (ProductError a NoError) = show a
+  show (ProductError a (Error s)) = "(" <> show a <> "," <> showErrors s <> " )"
 
 -- | Eq instance of ProductError, required by sets
 instance (AbstractDomain a) => Eq (ProductError a) where
@@ -73,7 +73,7 @@ instance (AbstractValue a) => AbstractValue (ProductError a) where
   -- \| runtime errors, so only a's alpha is used
   alpha :: Maybe ([Int] -> ProductError a)
   alpha = case (alpha @a) of
-    (Just alphaA) -> Just $ \inp -> ProductError (alphaA inp) NoError
+    (Just alphaA) -> Just $ \inp -> ProductError (alphaA inp) top
     _ -> Nothing
 
   -- \| Concretization function of the ProductError domain, errors do not
@@ -96,8 +96,8 @@ instance (AbstractValue a) => AbstractValue (ProductError a) where
   absBinary op (ProductError a1 a2) (ProductError b1 b2) = case op of
     Div
       | includesZero b1 ->
-          let s = absBinary op a2 b2
-              s' = addError DivisionByZero s
+          let (Error s) = absBinary op a2 b2
+              s' = Error $ Set.insert DivisionByZero s
           in ProductError (absBinary op a1 b1) s'
     _ -> ProductError (absBinary op a1 b1) (absBinary op a2 b2)
 

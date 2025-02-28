@@ -1,6 +1,6 @@
 module Main (main) where
 
-import Abstract.Domain (AbstractDomain)
+import Abstract.Domain (AbstractDomain (top))
 import Abstract.State (NonRelational (Bottom, NonRelational), completeState)
 import Abstract.While (absWhileSemantics)
 import Args (Args (..), getArgs)
@@ -10,7 +10,6 @@ import Control.DeepSeq (deepseq)
 import Data.Map.Strict qualified as Map
 import Data.Maybe (fromMaybe)
 import Data.Text (pack, toLower)
-import Domains.Error.Error (Error (NoError))
 import Domains.Error.Product (ProductError (ProductError), splitDomain)
 import Domains.Interval.Bounds (setBounds)
 import MarkDown (generateOutput)
@@ -78,4 +77,4 @@ main = do
   -- \| Augment the given abstract state with error tracking information through a product domain
   getProd :: (Show a, AbstractDomain a) => NonRelational k a -> NonRelational k (ProductError a)
   getProd Bottom = Bottom
-  getProd (NonRelational _ x) = NonRelational False $ Map.map (`ProductError` NoError) x
+  getProd (NonRelational _ x) = NonRelational False $ Map.map (`ProductError` top) x
