@@ -40,9 +40,8 @@ stateBlock kind state = do
 -- | Generate a block to show the invariants
 invariantsBlock :: Map Int (NonRelational Text a) -> MarkdownWriter
 invariantsBlock invariants = do
-  tell "**Abstract loop invariants**:\n"
-  tell $ foldr (\(loopId, inv) acc -> "- (" <> show loopId <> "): " <> show inv <> "\n" <> acc) "" $ Map.assocs invariants
-  tell "\n"
+  let invS = foldr (\(loopId, inv) acc -> "- (" <> show loopId <> "): " <> show inv <> "\n" <> acc) "" $ Map.assocs invariants
+  if null invS then tell "" else tell $ "**Abstract loop invariants**:\n" ++ invS ++ "\n"
 
 -- | Generate a block to show the possible runtime errors detected by the analysis
 errorsBlock :: NonRelational Text Error -> MarkdownWriter
