@@ -30,13 +30,13 @@ pAssignment c = label "assignment statement" $ do
   varName <- pVarName
   _ <- symbol "="
   value <- pAexp
-  return (Assignment varName value, c)
+  return (Assignment c varName value, c + 1)
 
 -- | Parser for skip statements
 pSkip :: Int -> Parser (While, Int)
 pSkip c = label "skip statement" $ do
   _ <- pWord "skip"
-  return (Skip, c)
+  return (Skip c, c + 1)
 
 -- | Parser for if then else statements
 pIfThenElse :: Int -> Parser (While, Int)
@@ -44,11 +44,11 @@ pIfThenElse c = label "if then else statement" $ do
   _ <- pWord "if"
   guard <- pBexp
   _ <- pWord "then"
-  (thenBranch, c') <- pWhile' c
+  (thenBranch, c') <- pWhile' $ c + 1
   _ <- pWord "else"
   (elseBranch, c'') <- pWhile' c'
   _ <- pWord "endif"
-  return (IfThenElse guard thenBranch elseBranch, c'')
+  return (IfThenElse c guard thenBranch elseBranch, c'')
 
 -- | Parser for While loops
 pWhileDo :: Int -> Parser (While, Int)

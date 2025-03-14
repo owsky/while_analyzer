@@ -31,9 +31,9 @@ absWhileSemantics = absWhileSemantics' Map.empty -- tail recursive subfunction
   -- evaluating a statements against a Bottom state will always result in a Bottom state
   absWhileSemantics' inv _ _ _ _ Bottom = (bottom, inv)
   -- the assignment operation is given by the abstract state's implementation
-  absWhileSemantics' inv _ _ _ (Assignment x e) s = (assign (x, e) s, inv)
+  absWhileSemantics' inv _ _ _ (Assignment point x e) s = (assign (x, e) s, inv)
   -- skip does nothing, it simply returns the input state and the invariants accumulator
-  absWhileSemantics' inv _ _ _ Skip s = (s, inv)
+  absWhileSemantics' inv _ _ _ (Skip _) s = (s, inv)
   -- for composition it first evaluates the first statement, then it evaluates the
   -- second statement using the new abstract state and the new invariants accumulator
   absWhileSemantics' inv thresholds widenDelay descendSteps (Composition e1 e2) s =
@@ -42,14 +42,14 @@ absWhileSemantics = absWhileSemantics' Map.empty -- tail recursive subfunction
   -- if the else branches are evaluated separately on the states obtained if the condition is
   -- true/false, then the least upper bound of the results is returned, alongside the union
   -- of the loop invariants accumulator
-  absWhileSemantics' inv thresholds widenDelay descendSteps (IfThenElse b e1 e2) s =
+  absWhileSemantics' inv thresholds widenDelay descendSteps (IfThenElse point b e1 e2) s =
     let
       (thenBranch, invThen) = absWhileSemantics' inv thresholds widenDelay descendSteps e1 (absBexpSemantics b s)
       (elseBranch, invElse) = absWhileSemantics' inv thresholds widenDelay descendSteps e2 (absBexpSemantics (BexpUnary Not b) s)
     in
       (thenBranch `lub` elseBranch, invThen `Map.union` invElse)
   -- while loops are evaluated by looking for the smallest fixpoint of the loop
-  absWhileSemantics' inv thresholds widenDelay descendSteps (WhileDo c b e) s =
+  absWhileSemantics' inv thresholds widenDelay descendSteps (WhileDo point b e) s =
     let
       -- first define the loop's functional as the least upper bound of the input state and the concatenation
       -- of the body's semantics with the guard's semantics, evaluated over the current state x bound by the
@@ -68,7 +68,7 @@ absWhileSemantics = absWhileSemantics' Map.empty -- tail recursive subfunction
     in
       -- lastly filter the lfp state with the negated guard of the loop, and keep track of the
       -- lfp as it is the loop's invariant
-      (absBexpSemantics (BexpUnary Not b) finalState, Map.insert c finalState finalInv)
+      (absBexpSemantics (BexpUnary Not b) finalState, Map.insert point finalState finalInv)
    where
     -- Kleeni iterations with optional widening
     iterateW g (x, invAcc) (Just 0) =
