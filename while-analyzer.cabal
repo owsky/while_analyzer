@@ -23,18 +23,18 @@ library
   import:          opts
   hs-source-dirs:  src
   exposed-modules:
-    Abstract.Aexp
-    Abstract.Bexp
     Abstract.Domain
+    Abstract.ErrorProductState
+    Abstract.Semantics.Aexp
+    Abstract.Semantics.Bexp
+    Abstract.Semantics.While
     Abstract.State
     Abstract.Value
-    Abstract.While
     Ast.AexpAst
     Ast.BexpAst
     Ast.ProgramAst
     Ast.WhileAst
-    Domains.Error.Error
-    Domains.Error.Product
+    Domains.Error
     Domains.Interval.Arithmetics
     Domains.Interval.Bounds
     Domains.Interval.Interval

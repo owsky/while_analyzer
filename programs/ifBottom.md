@@ -7,18 +7,16 @@
 - m = -∞, n = +∞
 ```pascal
 begin
-  if (true) then
-    x = 1 / 0;
+  if (true) then -- (0)
+    x = 1 / 0; -- (1)
   else
-    skip;
+    skip; -- (2)
   endif;
 end
 ```
-**Abstract loop invariants**:
-
 **Output state**:
 - $⊥^{\text{\#}}$
 
 
 **Runtime error alarms**:
-- x: possible division by zero
+- (1): possible division by zero

@@ -7,15 +7,15 @@
 - m = -∞, n = +∞
 ```pascal
 begin
-  x = 1;
-  y = 10;
-  while (x < 11) do -- (0)
-    x = y + 1;
+  x = 1; -- (0)
+  y = 10; -- (1)
+  while (x < 11) do -- (2)
+    x = y + 1; -- (3)
   done;
 end
 ```
 **Abstract loop invariants**:
-- (0): x: [1, 11], y: [10, 10]
+- (2): x: [1, 11], y: [10, 10]
 
 **Output state**:
 - x: [11, 11], y: [10, 10]

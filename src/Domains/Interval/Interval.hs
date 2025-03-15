@@ -2,18 +2,16 @@
 
 module Domains.Interval.Interval (Interval (..), mkInterval, IntervalState) where
 
-import Abstract.Aexp (absAexpSemantics)
 import Abstract.Domain (AbstractDomain (..))
-import Abstract.State (AbstractState (..), NonRelational (..))
+import Abstract.State (NonRelational (..))
 import Abstract.Value (AbstractValue (..))
-import Ast.AexpAst (Aexp, AexpBinaryOp (..), AexpUnaryOp (..))
+import Ast.AexpAst (AexpBinaryOp (..), AexpUnaryOp (..))
 import Data.Set (Set)
 import Data.Set qualified as Set
 import Data.Text (Text)
 import Domains.Interval.Arithmetics (divIntervals, mulIntervals, negateInterval, subIntervals, sumIntervals)
 import Domains.Interval.Bounds (clampInterval)
 import ExtendedInt (ExtendedInt (..))
-import State (State (..))
 
 -- | ADT for the Interval abstract domain value
 data Interval
@@ -225,11 +223,3 @@ instance AbstractValue Interval where
 -- | Type of abstract states domain for the Interval abstract value.
 -- | Derived by pointwise lifing with smashed Bottom
 type IntervalState = NonRelational Text Interval
-
--- | AbstractState instance for the IntervalState type
-instance AbstractState IntervalState where
-  assign :: (Text, Aexp) -> IntervalState -> IntervalState
-  assign _ Bottom = Bottom
-  assign (x, aexp) s = case absAexpSemantics aexp s of
-    e | isBottom e -> Bottom
-    e -> update s x e

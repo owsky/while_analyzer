@@ -7,19 +7,16 @@
 - m = -∞, n = +∞
 ```pascal
 begin
-  x = 0;
-  if (1 / x == 2) then
-    y = y + 5;
+  if (1 / 0 == 2) then -- (0)
+    y = y + 5; -- (1)
   else
-    x = 1;
+    x = 1; -- (2)
   endif;
 end
 ```
-**Abstract loop invariants**:
-
 **Output state**:
-- x: [0, 1], y: $⊤_{b}^{\text{\#}}$
+- x: $⊤_{b}^{\text{\#}}$, y: $⊤_{b}^{\text{\#}}$
 
 
 **Runtime error alarms**:
-None
+- (0): possible division by zero

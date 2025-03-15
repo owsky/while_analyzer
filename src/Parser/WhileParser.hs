@@ -9,8 +9,10 @@ import Parser.UtilsParser (Parser, failMissingSemi, pVarName, pWord, sc', semi, 
 import Text.Megaparsec (MonadParsec (getParserState, label), choice, optional)
 
 -- | Parser for statements of the While programming language
-pWhile :: Parser While
-pWhile = fst <$> pWhile' 0
+pWhile :: Parser (While, Int)
+pWhile = do
+  (while, c) <- pWhile' 0
+  return (while, c - 1)
 
 pWhile' :: Int -> Parser (While, Int)
 pWhile' c = label "while statement" $ do

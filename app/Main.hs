@@ -1,8 +1,8 @@
 module Main (main) where
 
-import Abstract.Domain (AbstractDomain (bottom))
-import Abstract.State (NonRelational (Bottom, NonRelational), completeState)
-import Abstract.While (absWhileSemantics)
+import Abstract.ErrorProductState (ErrorProductState (..))
+import Abstract.Semantics.While (absWhileSemantics)
+import Abstract.State (NonRelational (NonRelational), completeState)
 import Args (Args (..), getArgs)
 import Ast.ProgramAst (Program (..))
 import Ast.WhileAst (freeVars, getConstants)
@@ -10,7 +10,7 @@ import Control.DeepSeq (deepseq)
 import Data.Map.Strict qualified as Map
 import Data.Maybe (fromMaybe)
 import Data.Text (pack, toLower)
-import Domains.Error.Product (ProductError (ProductError), splitDomain)
+import Domains.Error (createErrorState)
 import Domains.Interval.Bounds (setBounds)
 import MarkDown (generateOutput)
 import Parser.IntervalParser (pInterval)
@@ -37,7 +37,7 @@ main = do
 
   -- parse the input file into a program
   let abstractParser = getAbstractDomainParser absDomainName
-  Program inputState w <- parseProgram inputFilePath abstractParser
+  (Program inputState w, programPoints) <- parseProgram inputFilePath abstractParser
 
   -- compute the free variables occurring in the program
   let vars = freeVars w
@@ -45,23 +45,17 @@ main = do
   -- compute an abstract state containing all variables, setting missing variables to top
   let completeInputState = completeState (fromMaybe (NonRelational True Map.empty) inputState) vars
 
-  -- transform the input state into a product state to keep track of runtime errors
-  let productInputState = getProd completeInputState
+  -- create the product state by combining the complete abstract state and a new error state for the program
+  let errorProductState = ErrorProductState{valueState = completeInputState, errorState = createErrorState programPoints}
 
   -- compute the arithmetic constants syntactically occurring in the program, used for widening thresholds
   let constants = getConstants w
 
   -- compute the output state and the loop invariants by induction on the program's denotational semantics
-  let (output, loopInvariants) = absWhileSemantics constants widenDelay descendSteps w productInputState
-
-  -- remove error tracking information from the loop invariants
-  let loopInvariants' = Map.map (fst . splitDomain) loopInvariants
-
-  -- separate the output abstract state into a value state and an error state
-  let (outputState, outputErrors) = splitDomain output
+  let (ErrorProductState valueState errorState, loopInvariants) = absWhileSemantics constants widenDelay descendSteps w errorProductState
 
   -- generate the analysis results in markdown format
-  mdContent <- generateOutput inputFilePath completeInputState (m, n) w outputState outputErrors loopInvariants'
+  mdContent <- generateOutput inputFilePath completeInputState (m, n) w valueState errorState loopInvariants
 
   -- write output to file, while forcing strict evaluation so an empty file is not created in case of errors
   mdContent `deepseq` writeFile outputFilePath mdContent
@@ -74,8 +68,3 @@ main = do
   getAbstractDomainParser domainName = case toLower $ pack domainName of
     "interval" -> pInterval
     _ -> error "Unsupported abstract domain"
-  -- \| Augment the given abstract state with error tracking information through a product domain
-  getProd :: (Show a, AbstractDomain a) => NonRelational k a -> NonRelational k (ProductError a)
-  getProd Bottom = Bottom
-  -- errors get initialized to bottom so no initial errors are assumed befor analyzing
-  getProd (NonRelational _ x) = NonRelational False $ Map.map (`ProductError` bottom) x

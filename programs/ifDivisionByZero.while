@@ -1,6 +1,5 @@
 begin
-  x = 0;
-  if (1 / x == 2) then
+  if (1 / 0 == 2) then
     y = y + 5;
   else
     x = 1;

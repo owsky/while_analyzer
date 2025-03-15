@@ -7,19 +7,18 @@ import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
 import Data.Maybe (fromJust)
 import Data.Set (Set)
-import Data.Text (Text)
 import ExtendedInt (ExtendedInt)
 import State (State (..))
 import Utils (showMapVars)
 import Prelude hiding (lookup)
 
 -- | Type class for the abstract domain of states
-class (AbstractDomain a) => AbstractState a where
+class (AbstractDomain s) => AbstractState s k where
   -- | Abstraction of the assignment operator which given a pair
   -- | (variable name, arithmetic expression) and an abstract state,
   -- | produces a new abstract state with the evaluated expression
   -- | assigned to the given variable
-  assign :: (Text, Aexp) -> a -> a
+  assign :: (k, Aexp) -> s -> s
 
 -- | Type of non relational states domains, obtained through pointwise lifting of the
 -- | abstract values lattice, with an optional smashed bottom depending on the Boolean value
@@ -52,62 +51,62 @@ instance Show (NonRelational k v) where
   show (NonRelational _ s) = showMapVars (Map.toList s)
 
 -- | Making the type of non relational states domain a State
-instance (AbstractDomain a, Show a, Eq a, Ord a) => State NonRelational Text a where
-  lookup :: NonRelational Text a -> Text -> a
+instance (AbstractDomain a, Show a, Eq a, Ord a) => State NonRelational k a where
+  lookup :: NonRelational k a -> k -> a
   lookup Bottom _ = bottom
   lookup (NonRelational _ s) v = fromJust $ Map.lookup v s
 
-  update :: NonRelational Text a -> Text -> a -> NonRelational Text a
+  update :: NonRelational k a -> k -> a -> NonRelational k a
   update Bottom _ _ = Bottom
   update (NonRelational smash s) k v = smashBottom (NonRelational smash $ Map.insert k v s)
 
-  getVars :: NonRelational Text a -> [Text]
+  getVars :: NonRelational k a -> [k]
   getVars Bottom = []
   getVars (NonRelational _ s) = Map.keys s
 
 -- | Making the type of non relational states domain an abstract domain
-instance (AbstractValue a, Show a, Eq a, Ord a) => AbstractDomain (NonRelational Text a) where
+instance (AbstractValue a, Show a, Eq a, Ord a) => AbstractDomain (NonRelational k a) where
   -- \| Partial order relation for abstract states, defined by checking if for all variables
   -- \| the values stored in the first state are all smaller or equal to the ones stored
   -- \| in the second state
-  leq :: NonRelational Text a -> NonRelational Text a -> Bool
+  leq :: NonRelational k a -> NonRelational k a -> Bool
   leq Bottom _ = True
   leq _ Bottom = False
   leq x y = all (\v -> lookup x v `leq` lookup y v) (getVars x)
 
-  bottom :: NonRelational Text a
+  bottom :: NonRelational k a
   bottom = Bottom
 
   -- \| The top element of an abstract state should simply output the abstract values domain's
   -- \| top value for each variable, but this is not representable as a map in Haskell
   -- \| Since it's not actually needed by the analyzer, it is left undefined
-  top :: NonRelational Text a
+  top :: NonRelational k a
   top = undefined
 
   -- \| Least upper bound operator for abstract states. Bottom is absorbing
   -- \| Otherwise defined as the map intersection with the abstract value's lub operator
-  lub :: NonRelational Text a -> NonRelational Text a -> NonRelational Text a
+  lub :: NonRelational k a -> NonRelational k a -> NonRelational k a
   lub Bottom y = y
   lub x Bottom = x
   lub (NonRelational smash1 x) (NonRelational smash2 y) = intersectionWith lub (smash1 || smash2) x y
 
   -- \| Greatest lower bound operator for abstract states. Bottom is strict.
   -- \| Otherwise defined as the map intersection with the abstract value's glb operator
-  glb :: NonRelational Text a -> NonRelational Text a -> NonRelational Text a
+  glb :: NonRelational k a -> NonRelational k a -> NonRelational k a
   glb Bottom _ = Bottom
   glb _ Bottom = Bottom
   glb (NonRelational smash1 x) (NonRelational smash2 y) = intersectionWith glb (smash1 || smash2) x y
 
   -- \| Widening with thresholds operator for abstract states. Bottom is absorbing.
   -- \| Otherwise defined as the map intersection with the abstract value's widening operator
-  widening :: Set ExtendedInt -> NonRelational Text a -> NonRelational Text a -> NonRelational Text a
+  widening :: Set ExtendedInt -> NonRelational k a -> NonRelational k a -> NonRelational k a
   widening _ Bottom y = y
   widening _ x Bottom = x
   widening thresholds (NonRelational smash1 x) (NonRelational smash2 y) = intersectionWith (widening thresholds) (smash1 || smash2) x y
 
   -- \| Narrowing operator for abstract states. Bottom is absorbing.
   -- \| Otherwise defined as the map intersection with the abstract value's narrowing operator
-  narrowing :: NonRelational Text a -> NonRelational Text a -> NonRelational Text a
+  narrowing :: NonRelational k a -> NonRelational k a -> NonRelational k a
   narrowing Bottom _ = Bottom
   narrowing x Bottom = x
   narrowing (NonRelational smash1 x) (NonRelational smash2 y) = intersectionWith narrowing (smash1 || smash2) x y

@@ -1,7 +1,7 @@
 module Ast.ProgramAst where
 
 import Abstract.State (NonRelational)
-import Ast.WhileAst (While)
+import Ast.WhileAst (While (..))
 import Data.Text (Text)
 
 -- | ADT for a While Program, made of an abstract input state parameterized by an abstract domain,

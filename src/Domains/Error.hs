@@ -1,23 +1,24 @@
-module Domains.Error.Error (Error (..), ErrorType (..), showErrors) where
+module Domains.Error where
 
 import Abstract.Domain (AbstractDomain (..))
+import Abstract.State (NonRelational (NonRelational))
 import Abstract.Value (AbstractValue (..))
 import Ast.AexpAst (AexpBinaryOp, AexpUnaryOp)
 import Data.List (intercalate)
+import Data.Map.Strict qualified as Map
 import Data.Set (Set)
 import Data.Set qualified as Set
 import ExtendedInt (ExtendedInt)
 
 -- | ADT for error types, currently only division by zero is supported
-data ErrorType = DivisionByZero deriving (Enum, Bounded, Ord, Eq)
+data ErrorType
+  = DivisionByZero
+  -- enum and bounded instances are only needed for autogeneration of top element
+  deriving (Enum, Bounded, Ord, Eq)
 
 instance Show ErrorType where
   show :: ErrorType -> String
   show DivisionByZero = "possible division by zero"
-
--- | Set of all error types
-allErrors :: Set ErrorType
-allErrors = Set.fromList [minBound .. maxBound]
 
 -- | ADT for the Error Domain
 newtype Error = Error (Set ErrorType) deriving (Show, Ord, Eq)
@@ -29,7 +30,7 @@ showErrors e = intercalate ", " (map show $ Set.toList e)
 -- | Making Error an instance of AbstractDomain, so it can be used in a
 -- | product domain
 instance AbstractDomain Error where
-  -- \| Partial order relation for errors
+  -- \| Partial order relation for errors, simply set inclusion
   leq :: Error -> Error -> Bool
   leq (Error s1) (Error s2) = s1 `Set.isSubsetOf` s2
 
@@ -39,7 +40,7 @@ instance AbstractDomain Error where
 
   -- \| Top element of the lattice, all errors detected
   top :: Error
-  top = Error allErrors
+  top = Error $ Set.fromList [minBound .. maxBound]
 
   -- \| Least upper bound operator, given two alarms the error sets are merged
   lub :: Error -> Error -> Error
@@ -112,3 +113,11 @@ instance AbstractValue Error where
 
   includesZero :: Error -> Bool
   includesZero = const False
+
+-- | Type of abstract states domain for the error value
+type ErrorState = NonRelational Int Error
+
+-- | Helper function which creates a new error abstract state from a list of program
+-- | points occurring in the program
+createErrorState :: [Int] -> ErrorState
+createErrorState points = NonRelational False $ Map.fromList (map (,bottom) points)
