@@ -1,10 +1,10 @@
-module State (State (..)) where
+module ProgramState (ProgramState (..)) where
 
--- | Type class for States, parameterized on
+-- | Type class for Program States, parameterized on
 -- | s: the type of the actual state
 -- | k: the type of the keys
 -- | v: the type of the values
-class State s k v where
+class ProgramState s k v where
   -- | Given a state and a key, return the value stored
   -- | for the key. Assuming totality for lookup, so
   -- | retrieving a missing key would produce a runtime error

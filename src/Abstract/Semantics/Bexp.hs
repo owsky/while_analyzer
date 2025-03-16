@@ -9,7 +9,7 @@ import Ast.AexpAst (Aexp (..), AexpBinaryOp (..))
 import Ast.BexpAst (AexpCompOp (..), Bexp (..), BoolBinaryOp (..), BoolUnaryOp (..), deMorgan)
 import Data.Set qualified as Set
 import Data.Text (Text)
-import State (State (..))
+import ProgramState (ProgramState (..))
 
 -- | Abstract evaluation of Boolean expressions, defined by induction on their
 -- | denotational semantics

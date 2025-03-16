@@ -12,7 +12,7 @@ import Data.Text (Text)
 import Domains.Interval.Arithmetics (divIntervals, mulIntervals, negateInterval, subIntervals, sumIntervals)
 import Domains.Interval.Bounds (clampInterval)
 import ExtendedInt (ExtendedInt (..))
-import State (State (..))
+import ProgramState (ProgramState (..))
 
 -- | ADT for the Interval abstract domain value
 data Interval

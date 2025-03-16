@@ -7,7 +7,7 @@ import Data.Map.Strict qualified as Map
 import Data.Maybe (fromJust)
 import Data.Set (Set)
 import ExtendedInt (ExtendedInt)
-import State (State (..))
+import ProgramState (ProgramState (..))
 import Utils (showMapVars)
 import Prelude hiding (lookup)
 
@@ -50,7 +50,7 @@ instance Show (NonRelational k v) where
   show (NonRelational s) = showMapVars (Map.toList s)
 
 -- | Making the type of non relational states domain a State
-instance (AbstractDomain a, Show a, Eq a, Ord a) => State NonRelational k a where
+instance (AbstractDomain a, Show a, Eq a, Ord a) => ProgramState NonRelational k a where
   lookup :: NonRelational k a -> k -> a
   lookup Bottom _ = bottom
   lookup (NonRelational s) v = fromJust $ Map.lookup v s

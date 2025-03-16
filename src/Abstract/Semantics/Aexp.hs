@@ -7,7 +7,7 @@ import Ast.AexpAst (Aexp (..), AexpBinaryOp (..))
 import Data.Set (Set)
 import Data.Set qualified as Set
 import Data.Text (Text)
-import State (State (..))
+import ProgramState (ProgramState (..))
 import Prelude hiding (lookup)
 
 -- | Abstract evaluation of arithmetic expressions, defined by induction on their denotational semantics
