@@ -1,4 +1,4 @@
-module Parser.IntervalParser where
+module Parser.IntervalParser (pInterval) where
 
 import Control.Monad (void)
 import Domains.Interval.Interval (Interval, mkInterval)

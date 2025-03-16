@@ -27,4 +27,4 @@ end
 
 
 **Runtime error alarms**:
-- (0): possible division by zero
+- (0) Possible division by zero

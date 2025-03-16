@@ -1,4 +1,17 @@
-module Parser.UtilsParser where
+module Parser.UtilsParser (
+  Parser,
+  comma,
+  pWord,
+  signedInt,
+  symbol,
+  binaryL,
+  pVarName,
+  prefix,
+  roundParens,
+  failMissingSemi,
+  sc',
+  semi,
+) where
 
 import Control.Monad.Combinators.Expr (Operator (InfixL, Prefix))
 import Data.Char (isAlphaNum)

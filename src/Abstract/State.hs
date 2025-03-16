@@ -2,7 +2,6 @@ module Abstract.State (AbstractState (..), NonRelational (..), completeState) wh
 
 import Abstract.Domain (AbstractDomain (..))
 import Abstract.Value (AbstractValue)
-import Ast.AexpAst (Aexp)
 import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
 import Data.Maybe (fromJust)
@@ -13,17 +12,17 @@ import Utils (showMapVars)
 import Prelude hiding (lookup)
 
 -- | Type class for the abstract domain of states
-class (AbstractDomain s) => AbstractState s k where
+class (AbstractDomain s) => AbstractState s k v where
   -- | Abstraction of the assignment operator which given a pair
   -- | (variable name, arithmetic expression) and an abstract state,
   -- | produces a new abstract state with the evaluated expression
   -- | assigned to the given variable
-  assign :: (k, Aexp) -> s -> s
+  assign :: k -> v -> s -> s
 
 -- | Type of non relational states domains, obtained through pointwise lifting of the
 -- | abstract values lattice, with an optional smashed bottom depending on the Boolean value
 data NonRelational k v where
-  NonRelational :: (Show k, Show v, Eq k, Eq v, Ord k, Ord v) => Bool -> Map k v -> NonRelational k v
+  NonRelational :: (Show k, Show v, Eq k, Eq v, Ord k, Ord v) => Map k v -> NonRelational k v
   Bottom :: NonRelational k v
 
 -- | Ord instance of non relational states domains, it holds no actual meaning
@@ -33,14 +32,14 @@ instance Ord (NonRelational k v) where
   compare Bottom Bottom = EQ
   compare Bottom _ = LT
   compare _ Bottom = GT
-  compare (NonRelational _ x) (NonRelational _ y) = compare x y
+  compare (NonRelational x) (NonRelational y) = compare x y
 
 -- | Eq instance of non relational states domains, simply checks if the maps
 -- | hold the same values for the same keys
 instance Eq (NonRelational k v) where
   (==) :: NonRelational k v -> NonRelational k v -> Bool
   Bottom == Bottom = True
-  (NonRelational _ x) == (NonRelational _ y) = x == y
+  (NonRelational x) == (NonRelational y) = x == y
   _ == _ = False
 
 -- | Show instance of non relational states domains, used to produce the
@@ -48,21 +47,21 @@ instance Eq (NonRelational k v) where
 instance Show (NonRelational k v) where
   show :: NonRelational k v -> String
   show Bottom = "$⊥^{\\text{\\#}}$"
-  show (NonRelational _ s) = showMapVars (Map.toList s)
+  show (NonRelational s) = showMapVars (Map.toList s)
 
 -- | Making the type of non relational states domain a State
 instance (AbstractDomain a, Show a, Eq a, Ord a) => State NonRelational k a where
   lookup :: NonRelational k a -> k -> a
   lookup Bottom _ = bottom
-  lookup (NonRelational _ s) v = fromJust $ Map.lookup v s
+  lookup (NonRelational s) v = fromJust $ Map.lookup v s
 
   update :: NonRelational k a -> k -> a -> NonRelational k a
   update Bottom _ _ = Bottom
-  update (NonRelational smash s) k v = smashBottom (NonRelational smash $ Map.insert k v s)
+  update (NonRelational s) k v = smashBottom (NonRelational $ Map.insert k v s)
 
   getVars :: NonRelational k a -> [k]
   getVars Bottom = []
-  getVars (NonRelational _ s) = Map.keys s
+  getVars (NonRelational s) = Map.keys s
 
 -- | Making the type of non relational states domain an abstract domain
 instance (AbstractValue a, Show a, Eq a, Ord a) => AbstractDomain (NonRelational k a) where
@@ -88,35 +87,35 @@ instance (AbstractValue a, Show a, Eq a, Ord a) => AbstractDomain (NonRelational
   lub :: NonRelational k a -> NonRelational k a -> NonRelational k a
   lub Bottom y = y
   lub x Bottom = x
-  lub (NonRelational smash1 x) (NonRelational smash2 y) = intersectionWith lub (smash1 || smash2) x y
+  lub (NonRelational x) (NonRelational y) = intersectionWith lub x y
 
   -- \| Greatest lower bound operator for abstract states. Bottom is strict.
   -- \| Otherwise defined as the map intersection with the abstract value's glb operator
   glb :: NonRelational k a -> NonRelational k a -> NonRelational k a
   glb Bottom _ = Bottom
   glb _ Bottom = Bottom
-  glb (NonRelational smash1 x) (NonRelational smash2 y) = intersectionWith glb (smash1 || smash2) x y
+  glb (NonRelational x) (NonRelational y) = intersectionWith glb x y
 
   -- \| Widening with thresholds operator for abstract states. Bottom is absorbing.
   -- \| Otherwise defined as the map intersection with the abstract value's widening operator
   widening :: Set ExtendedInt -> NonRelational k a -> NonRelational k a -> NonRelational k a
   widening _ Bottom y = y
   widening _ x Bottom = x
-  widening thresholds (NonRelational smash1 x) (NonRelational smash2 y) = intersectionWith (widening thresholds) (smash1 || smash2) x y
+  widening thresholds (NonRelational x) (NonRelational y) = intersectionWith (widening thresholds) x y
 
   -- \| Narrowing operator for abstract states. Bottom is absorbing.
   -- \| Otherwise defined as the map intersection with the abstract value's narrowing operator
   narrowing :: NonRelational k a -> NonRelational k a -> NonRelational k a
   narrowing Bottom _ = Bottom
   narrowing x Bottom = x
-  narrowing (NonRelational smash1 x) (NonRelational smash2 y) = intersectionWith narrowing (smash1 || smash2) x y
+  narrowing (NonRelational x) (NonRelational y) = intersectionWith narrowing x y
 
 -- | Helper function which performs the intersection of two maps, using the given function to
 -- | combine the values from both states. If the Boolean value is true and any value ends up being bottom,
 -- | then the whole state becomes bottom (smashed bottom)
 intersectionWith ::
-  (Show k, Show v, Ord k, Ord v, AbstractDomain v) => (a -> b -> v) -> Bool -> Map k a -> Map k b -> NonRelational k v
-intersectionWith f smash m1 m2 = smashBottom $ NonRelational smash $ Map.intersectionWith f m1 m2
+  (Show k, Show v, Ord k, Ord v, AbstractDomain v) => (a -> b -> v) -> Map k a -> Map k b -> NonRelational k v
+intersectionWith f m1 m2 = smashBottom $ NonRelational $ Map.intersectionWith f m1 m2
 
 -- | Given an abstract state and a list of variables syntactically occuring in a program,
 -- | it completes the state by adding for each missing variable an entry which is mapped
@@ -127,18 +126,17 @@ completeState s vars = smashBottom $ completeState' s vars
   completeState' :: (Ord k, AbstractDomain v) => NonRelational k v -> [k] -> NonRelational k v
   completeState' Bottom _ = Bottom
   completeState' s' [] = s'
-  completeState' (NonRelational _ s') (x : xs) =
+  completeState' (NonRelational s') (x : xs) =
     if Map.notMember x s'
-      then completeState' (NonRelational True (Map.insert x top s')) xs
+      then completeState' (NonRelational (Map.insert x top s')) xs
       else case isBottom (fromJust $ Map.lookup x s') of
         True -> Bottom
-        False -> completeState' (NonRelational True s') xs
+        False -> completeState' (NonRelational s') xs
 
 -- | If a state containing an abstract value's bottom is passed and the Boolean value is true,
 -- | then the output state will be bottom, otherwise it acts as the identity function
 smashBottom :: (Ord k, AbstractDomain v) => NonRelational k v -> NonRelational k v
 smashBottom Bottom = Bottom
-smashBottom (NonRelational False s) = NonRelational False s
-smashBottom (NonRelational True s) = case any isBottom (Map.elems s) of
+smashBottom (NonRelational s) = case any isBottom (Map.elems s) of
   True -> Bottom
-  False -> NonRelational True s
+  False -> NonRelational s

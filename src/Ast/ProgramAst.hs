@@ -1,4 +1,4 @@
-module Ast.ProgramAst where
+module Ast.ProgramAst (Program (..)) where
 
 import Abstract.State (NonRelational)
 import Ast.WhileAst (While (..))

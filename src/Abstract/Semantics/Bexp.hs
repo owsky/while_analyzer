@@ -1,51 +1,55 @@
 module Abstract.Semantics.Bexp (absBexpSemantics) where
 
 import Abstract.Domain (AbstractDomain (..))
-import Abstract.ErrorProductState (ErrorProductState (..))
 import Abstract.Semantics.Aexp (absAexpSemantics)
 import Abstract.State (NonRelational)
 import Abstract.Value (AbstractValue (..))
+import Alarms (Alarms, mergeAlarms, updateAlarms)
 import Ast.AexpAst (Aexp (..), AexpBinaryOp (..))
 import Ast.BexpAst (AexpCompOp (..), Bexp (..), BoolBinaryOp (..), BoolUnaryOp (..), deMorgan)
-import Domains.Error (Error)
+import Data.Set qualified as Set
+import Data.Text (Text)
 import State (State (..))
 
 -- | Abstract evaluation of Boolean expressions, defined by induction on their
 -- | denotational semantics
 absBexpSemantics ::
-  (AbstractValue a, Show a, Eq a, Ord a, AbstractDomain (NonRelational Int Error)) =>
+  (AbstractValue a, Show a, Eq a, Ord a) =>
   Bexp ->
   Int ->
-  ErrorProductState a ->
-  ErrorProductState a
-absBexpSemantics BTrue _ s = s
-absBexpSemantics BFalse _ (ErrorProductState _ err) = ErrorProductState bottom err
-absBexpSemantics (AexpComp op a1 a2) point s = propagation op a1 a2 s point
-absBexpSemantics (BexpBinary op b1 b2) point s =
+  NonRelational Text a ->
+  Alarms ->
+  (NonRelational Text a, Alarms)
+absBexpSemantics BTrue _ s alarms = (s, alarms)
+absBexpSemantics BFalse _ _ alarms = (bottom, alarms)
+absBexpSemantics (AexpComp op a1 a2) point s alarms = propagation op a1 a2 s point alarms
+absBexpSemantics (BexpBinary op b1 b2) point s alarms =
   let
-    (ErrorProductState s' err') = absBexpSemantics b1 point s
-    (ErrorProductState s'' err'') = absBexpSemantics b2 point s
+    (s', alarms') = absBexpSemantics b1 point s alarms
+    (s'', alarms'') = absBexpSemantics b2 point s alarms
+    finalAlarms = mergeAlarms alarms' alarms''
   in
     case op of
-      And -> ErrorProductState (s' `glb` s'') (err' `glb` err'')
-      Or -> ErrorProductState (s' `lub` s'') (err' `lub` err'')
-absBexpSemantics (BexpUnary Not b) s point = absBexpSemantics (deMorgan (BexpUnary Not b)) s point
+      And -> (s' `glb` s'', finalAlarms)
+      Or -> (s' `lub` s'', finalAlarms)
+absBexpSemantics (BexpUnary Not b) s point alarms = absBexpSemantics (deMorgan (BexpUnary Not b)) s point alarms
 
 -- | Propagation algorithm for advanced abstract tests, based on HC4-revise
 propagation ::
   (AbstractValue a, Show a, Eq a, Ord a) =>
-  AexpCompOp ->
-  Aexp ->
-  Aexp ->
-  ErrorProductState a ->
-  Int ->
-  ErrorProductState a
-propagation op a1 a2 s point =
+  AexpCompOp -> -- arithmetic comparison operator
+  Aexp -> -- left-hand side of the expression
+  Aexp -> -- right-hand side of the expression
+  NonRelational Text a -> -- input abstract state
+  Int -> -- program point
+  Alarms -> -- alarms map
+  (NonRelational Text a, Alarms)
+propagation op a1 a2 s point alarms =
   let
     -- forward evaluation of the two arithmetic subexpressions:
     (v1, e1) = absAexpSemantics a1 s
     (v2, e2) = absAexpSemantics a2 s
-    errors = e1 `lub` e2
+    errors = e1 `Set.union` e2
     -- compute the difference between v1 and v2 in order to rewrite the test as v1 - v2 op 0.
     -- This also represents the root of the tree of arithmetic operations
     root = absBinary Sub v1 v2
@@ -68,10 +72,10 @@ propagation op a1 a2 s point =
     (v1', v2') = backAbsBinary Sub (v1, v2, rootIntersected)
 
     -- propagate the refined information to both subtrees rooted at the children of the root
-    s1 = backpropagate a1 v1' s
-    (ErrorProductState vs2 es2) = backpropagate a2 v2' s1
+    leftS = backpropagate a1 v1' s
+    rightS = backpropagate a2 v2' leftS
   in
-    ErrorProductState vs2 (update es2 point errors)
+    (rightS, updateAlarms alarms point errors)
 
 -- Function which given an arithmetic expression, a refined result of the arithmetic operation and
 -- an abstract state, it backpropagates the refined result through the backwards abstract operators
@@ -80,9 +84,9 @@ backpropagate ::
   (AbstractValue a, Show a, Eq a, Ord a) =>
   Aexp ->
   a ->
-  ErrorProductState a ->
-  ErrorProductState a
-backpropagate (Var x) newVal (ErrorProductState s err) = ErrorProductState (update s x newVal) err
+  NonRelational Text a ->
+  NonRelational Text a
+backpropagate (Var x) newVal s = update s x newVal
 backpropagate (AexpUnary op e) newVal s =
   let
     (oldVal, _) = absAexpSemantics e s

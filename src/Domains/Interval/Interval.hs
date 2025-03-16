@@ -3,7 +3,7 @@
 module Domains.Interval.Interval (Interval (..), mkInterval, IntervalState) where
 
 import Abstract.Domain (AbstractDomain (..))
-import Abstract.State (NonRelational (..))
+import Abstract.State (AbstractState (..), NonRelational (..))
 import Abstract.Value (AbstractValue (..))
 import Ast.AexpAst (AexpBinaryOp (..), AexpUnaryOp (..))
 import Data.Set (Set)
@@ -12,6 +12,7 @@ import Data.Text (Text)
 import Domains.Interval.Arithmetics (divIntervals, mulIntervals, negateInterval, subIntervals, sumIntervals)
 import Domains.Interval.Bounds (clampInterval)
 import ExtendedInt (ExtendedInt (..))
+import State (State (..))
 
 -- | ADT for the Interval abstract domain value
 data Interval
@@ -215,11 +216,10 @@ instance AbstractValue Interval where
   nonNegative :: Interval
   nonNegative = mkInterval 0 PosInf
 
-  -- \| Checks if the given interval includes zero
-  includesZero :: Interval -> Bool
-  includesZero Empty = False
-  includesZero (Interval a b) = a <= 0 && 0 <= b
-
 -- | Type of abstract states domain for the Interval abstract value.
 -- | Derived by pointwise lifing with smashed Bottom
 type IntervalState = NonRelational Text Interval
+
+instance AbstractState IntervalState Text Interval where
+  assign :: Text -> Interval -> IntervalState -> IntervalState
+  assign varName value s = update s varName value

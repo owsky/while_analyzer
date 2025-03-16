@@ -1,4 +1,4 @@
-module ExtendedInt where
+module ExtendedInt (ExtendedInt (..)) where
 
 import Text.Read (readMaybe)
 

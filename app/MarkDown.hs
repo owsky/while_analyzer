@@ -2,14 +2,13 @@ module MarkDown (generateOutput) where
 
 import Abstract.Semantics.While (Invariants)
 import Abstract.State (NonRelational (..))
+import Alarms (Alarms (..), showAlarms)
 import Ast.WhileAst (While (..))
 import Control.Monad.Writer (MonadWriter (tell), Writer, execWriter)
 import Data.Char (toUpper)
 import Data.Map qualified as Map
 import Data.Map.Strict (Map)
-import Data.Set qualified as Set
 import Data.Text (Text)
-import Domains.Error (Error (..), ErrorState, showErrors)
 import ExtendedInt (ExtendedInt)
 import System.FilePath (dropExtensions, takeFileName)
 
@@ -44,19 +43,17 @@ invariantsBlock invariants = do
   if null invS then tell "" else tell $ "**Abstract loop invariants**:\n" ++ invS ++ "\n"
 
 -- | Generate a block to show the possible runtime errors detected by the analysis
-errorsBlock :: ErrorState -> MarkdownWriter
-errorsBlock Bottom = tell "An unexpected error occurred: the error domain should never produce a $\bot^\\#$ state"
-errorsBlock (NonRelational _ errors) = do
+errorsBlock :: Alarms -> MarkdownWriter
+errorsBlock alarms = do
   tell "\n**Runtime error alarms**:\n"
-  let errorString = showErrorList $ Map.assocs errors
-  tell $ if null errorString then "None" else errorString
+  let alarmsStrings = showAlarms alarms
+  case null alarmsStrings of
+    True -> tell "None"
+    False -> do
+      tell $ showErrorList alarmsStrings
  where
-  -- \| Pretty printing the (key,value) list
-  showErrorList :: [(Int, Error)] -> String
   showErrorList [] = ""
-  showErrorList ((point, Error s) : xs) = case Set.size s == 0 of
-    True -> showErrorList xs
-    False -> "- (" <> show point <> "): " <> showErrors s <> "\n" <> showErrorList xs
+  showErrorList (x : xs) = "- " <> x <> "\n" <> showErrorList xs
 
 -- | Generate the string MarkDown containing the analysis' results, wrapped in the IO monad
 generateOutput ::
@@ -66,7 +63,7 @@ generateOutput ::
   (ExtendedInt, ExtendedInt) -> -- runtime bounds
   While -> -- program
   NonRelational Text a -> -- output state
-  ErrorState -> -- output errors
+  Alarms -> -- output errors
   Invariants a -> -- loop invariants
   IO String
 generateOutput inputFilePath inputState bounds program outputState outputErrors loopInvariants = do

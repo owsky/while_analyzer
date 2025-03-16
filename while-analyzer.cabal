@@ -24,17 +24,16 @@ library
   hs-source-dirs:  src
   exposed-modules:
     Abstract.Domain
-    Abstract.ErrorProductState
     Abstract.Semantics.Aexp
     Abstract.Semantics.Bexp
     Abstract.Semantics.While
     Abstract.State
     Abstract.Value
+    Alarms
     Ast.AexpAst
     Ast.BexpAst
     Ast.ProgramAst
     Ast.WhileAst
-    Domains.Error
     Domains.Interval.Arithmetics
     Domains.Interval.Bounds
     Domains.Interval.Interval

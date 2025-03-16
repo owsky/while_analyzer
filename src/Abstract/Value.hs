@@ -1,10 +1,10 @@
 module Abstract.Value (AbstractValue (..)) where
 
-import Abstract.Domain (AbstractDomain)
+import Abstract.Domain (AbstractDomain (glb))
 import Ast.AexpAst (AexpBinaryOp, AexpUnaryOp)
 
 -- | Type class for the abstract domain of values
-class (AbstractDomain a) => AbstractValue a where
+class (AbstractDomain a, Eq a) => AbstractValue a where
   -- | Abstraction function, possibly undefined
   alpha :: Maybe ([Int] -> a)
 
@@ -43,3 +43,6 @@ class (AbstractDomain a) => AbstractValue a where
 
   -- | Checks whether the abstract value includes zero
   includesZero :: a -> Bool
+  includesZero v =
+    let zero = absConst 0
+    in (v `glb` zero) == zero
