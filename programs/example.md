@@ -3,8 +3,10 @@
 **Input state**:
 - x: $⊤_{b}^{\text{\#}}$, y: [-1, 1], z: $⊤_{b}^{\text{\#}}$
 
-**Input interval boundaries**:
-- m = -∞, n = +∞
+**Analysis input parameters**:
+- Interval bounds m = -10, n = 10
+- Widening Delay = not supplied, widening not used
+- Descending Steps = not supplied, abstract meet used for narrowing
 ```pascal
 begin
   x = 7 / y; -- (0)

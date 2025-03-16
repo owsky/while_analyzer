@@ -3,8 +3,10 @@
 **Input state**:
 - w: $⊤_{b}^{\text{\#}}$, x: [-1, 1], y: $⊤_{b}^{\text{\#}}$
 
-**Input interval boundaries**:
-- m = -∞, n = +∞
+**Analysis input parameters**:
+- Interval bounds m = -∞, n = +∞
+- Widening Delay = 1
+- Descending Steps = 2
 ```pascal
 begin
   y = 7 / x; -- (0)

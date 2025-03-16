@@ -15,14 +15,18 @@ import System.FilePath (dropExtensions, takeFileName)
 type MarkdownWriter = Writer String ()
 
 -- | Generate a markdown header at the given importance
-header :: Int -> String -> MarkdownWriter
-header level text = tell $ replicate level '#' ++ " " ++ text ++ "\n\n"
+titleBlock :: String -> MarkdownWriter
+titleBlock title = tell $ replicate 1 '#' ++ " " ++ title ++ "\n\n"
 
 -- | Generate a block containing the interval boundaries
-boundsBlock :: (ExtendedInt, ExtendedInt) -> MarkdownWriter
-boundsBlock (m, n) = do
-  tell "**Input interval boundaries**:\n"
-  tell $ "- m = " <> show m <> ", n = " <> show n <> "\n"
+boundsBlock :: ExtendedInt -> ExtendedInt -> Maybe Int -> Maybe Int -> MarkdownWriter
+boundsBlock m n wd ds = do
+  tell "**Analysis input parameters**:\n"
+  tell $ "- Interval bounds m = " <> show m <> ", n = " <> show n <> "\n"
+  let wdString = maybe "not supplied, widening not used" show wd
+  let dsString = maybe "not supplied, abstract meet used for narrowing" show ds
+  tell $ "- Widening Delay = " <> wdString <> "\n"
+  tell $ "- Descending Steps = " <> dsString <> "\n"
 
 -- | Generate a code block containing the program with syntax highlighting
 -- | and the loop invariants
@@ -60,20 +64,23 @@ generateOutput ::
   (Show a, Ord a) =>
   FilePath -> -- input file path, used to create the title
   NonRelational Text a -> -- input state
-  (ExtendedInt, ExtendedInt) -> -- runtime bounds
+  ExtendedInt ->
+  ExtendedInt -> -- runtime bounds
+  Maybe Int ->
+  Maybe Int ->
   While -> -- program
   NonRelational Text a -> -- output state
   Alarms -> -- output errors
   Invariants a -> -- loop invariants
   IO String
-generateOutput inputFilePath inputState bounds program outputState outputErrors loopInvariants = do
+generateOutput inputFilePath inputState m n wd ds program outputState outputErrors loopInvariants = do
   -- errors = do
   return $ execWriter generateMarkdown
  where
   generateMarkdown = do
-    header 1 $ capitalize (dropExtensions $ takeFileName inputFilePath)
+    titleBlock $ capitalize (dropExtensions $ takeFileName inputFilePath)
     stateBlock "Input" $ show inputState
-    boundsBlock bounds
+    boundsBlock m n wd ds
     codeBlock program
     invariantsBlock loopInvariants
     stateBlock "Output" $ show outputState

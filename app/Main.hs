@@ -54,7 +54,8 @@ main = do
   let (finalState, finalAlarms, loopInvariants) = absWhileSemantics constants widenDelay descendSteps w completeInputState alarms
 
   -- generate the analysis results in markdown format
-  mdContent <- generateOutput inputFilePath completeInputState (m, n) w finalState finalAlarms loopInvariants
+  mdContent <-
+    generateOutput inputFilePath completeInputState m n widenDelay descendSteps w finalState finalAlarms loopInvariants
 
   -- write output to file, while forcing strict evaluation so an empty file is not created in case of errors
   mdContent `deepseq` writeFile outputFilePath mdContent
